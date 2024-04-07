@@ -17,6 +17,7 @@ import org.mateus.service.exceptions.ProdutoNaoEncontradoException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -59,7 +60,7 @@ public class ProdutoService {
     public List<BuscaProdutoResponseDTO> listarPaginado(int page, int pageSize)
             throws ProdutoException {
 
-        final var produtos = this.repository.findAll().page(page - 1, pageSize);
+        final var produtos = this.repository.findAll(Sort.descending("id")).page(page - 1, pageSize);
         return produtos.stream().map(ProdutoMapper::toBuscaProdutoResponseDTO).collect(toList());
     }
 

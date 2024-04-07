@@ -79,9 +79,10 @@ public class ProdutoResource {
         final var response = this.produtoService.criar(dto);
         return Response.status(Status.CREATED).entity(response).build();
     }
-
+    
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
+    @Retry(maxRetries = 2)
     public Response atualizar(@Valid UpdateProdutoRequestDTO dto) {
         try {
             final var response = this.produtoService.update(dto);
@@ -91,10 +92,10 @@ public class ProdutoResource {
             return Response.status(Status.NOT_FOUND).build();
         }
     }
-
+    
     @Path("{id}")
     @DELETE
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Retry(maxRetries = 2)
     public Response delete(Long id) {
         try {
             this.produtoService.delete(id);
