@@ -92,7 +92,7 @@ public class ProdutoService {
             try {
                 this.transactionManager.rollback();
             } catch (IllegalStateException | SecurityException | SystemException e1) {
-                // TODO Auto-generated catch block
+                
                 e1.printStackTrace();
             }
             final var mensagem = "Erro ao criar produto";
