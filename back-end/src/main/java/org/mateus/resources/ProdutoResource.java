@@ -1,5 +1,6 @@
 package org.mateus.resources;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.resteasy.reactive.RestQuery;
 import org.mateus.dtos.CreateProdutoRequestDTO;
 import org.mateus.dtos.UpdateProdutoRequestDTO;
@@ -73,6 +74,7 @@ public class ProdutoResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Retry(maxRetries = 2)
     public Response criar(@Valid CreateProdutoRequestDTO dto) {
         final var response = this.produtoService.criar(dto);
         return Response.status(Status.CREATED).entity(response).build();

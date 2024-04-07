@@ -11,12 +11,21 @@ import org.mateus.dtos.UpdateProdutoRequestDTO;
 import org.mateus.mappers.ProdutoMapper;
 import org.mateus.persistence.entities.Produto;
 import org.mateus.persistence.repositories.ProdutoRepository;
+import org.mateus.producers.ProdutoProducer;
 import org.mateus.service.exceptions.ProdutoException;
 import org.mateus.service.exceptions.ProdutoNaoEncontradoException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
@@ -24,11 +33,16 @@ import jakarta.validation.Valid;
 public class ProdutoService {
 
     private final ProdutoRepository repository;
+    private final ProdutoProducer producer;
+    private final TransactionManager transactionManager;
     private static final Logger LOG = Logger.getLogger(ProdutoService.class);
 
     @Inject
-    public ProdutoService(ProdutoRepository repository) {
+    public ProdutoService(ProdutoRepository repository, ProdutoProducer producer,
+            TransactionManager transactionManager) {
         this.repository = repository;
+        this.producer = producer;
+        this.transactionManager = transactionManager;
     }
 
     public BuscaProdutoResponseDTO buscarPorId(Long id) throws ProdutoNaoEncontradoException {
@@ -56,21 +70,31 @@ public class ProdutoService {
         return produtos.stream().map(ProdutoMapper::toBuscaProdutoResponseDTO).collect(toList());
     }
 
-    public long total()
-            throws ProdutoException {
+    public long total() {
         return this.repository.count();
     }
 
-    @Transactional
+    // @Transactional(rollbackOn = ProdutoException.class)
     public BuscaProdutoResponseDTO criar(@Valid CreateProdutoRequestDTO createDto) throws ProdutoException {
         try {
             Produto produto = ProdutoMapper.fromCreateRequest(createDto);
-
+            this.transactionManager.begin();
             this.repository.persistAndFlush(produto);
+            this.transactionManager.commit();
+
+            this.producer.emitirProdutoCriado(ProdutoMapper.toCreateEvent(produto));
 
             return ProdutoMapper.toBuscaProdutoResponseDTO(produto);
 
-        } catch (PersistenceException e) {
+        } catch (PersistenceException | JsonProcessingException | NotSupportedException | SystemException
+                | SecurityException | IllegalStateException | RollbackException | HeuristicMixedException
+                | HeuristicRollbackException e) {
+            try {
+                this.transactionManager.rollback();
+            } catch (IllegalStateException | SecurityException | SystemException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
             final var mensagem = "Erro ao criar produto";
             LOG.error(mensagem, e);
 
@@ -78,7 +102,7 @@ public class ProdutoService {
         }
     }
 
-    @Transactional
+    @Transactional(rollbackOn = ProdutoException.class)
     public BuscaProdutoResponseDTO update(@Valid UpdateProdutoRequestDTO updateDto)
             throws ProdutoException, ProdutoNaoEncontradoException {
         try {
@@ -104,7 +128,7 @@ public class ProdutoService {
         }
     }
 
-    @Transactional
+    @Transactional(rollbackOn = ProdutoException.class)
     public void delete(Long id)
             throws ProdutoException, ProdutoNaoEncontradoException {
         try {
