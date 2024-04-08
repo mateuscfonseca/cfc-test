@@ -13,10 +13,10 @@ class ProdutosService {
       throw error; // Lança o erro para tratamento posterior
     }
   }
-  async listarProdutos(page = 1, pageSize = 10): Promise<BuscaProdutoDTO[]> {
+  async listarProdutos(page = 1, pageSize = 10, sortByColumn = 'id', sortByAsceding = false): Promise<BuscaProdutoDTO[]> {
     try {
       const response = await api.get("/produtos", {
-        params: { page, pageSize },
+        params: { page, pageSize, sortByColumn, sortByAsceding },
       });
       return response.data.map((data: any) => BuscaProdutoDTO.fromJSON(data)); // Retorna os dados dos produtos
     } catch (error) {

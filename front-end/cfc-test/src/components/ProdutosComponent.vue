@@ -11,13 +11,15 @@
       :items-length="totalItems"
       :page="page"
       :loading="loading"
-      @update:options="buscarProdutos"
+      @update:options="updateOptions"
     >
       <template v-slot:[`item.actions`]="{ item }">
         <v-icon class="me-2" size="small" @click="abrirModal(item)">
           mdi-pencil
         </v-icon>
-        <v-icon size="small" @click="confirmarDeletarProduto(item)"> mdi-delete </v-icon>
+        <v-icon size="small" @click="confirmarDeletarProduto(item)">
+          mdi-delete
+        </v-icon>
       </template>
     </v-data-table-server>
 
@@ -32,15 +34,13 @@
 
     <v-dialog v-model="erroDialog" max-width="600">
       <v-card>
-        <v-card-title>
-          Ocorreu um erro
-        </v-card-title>
+        <v-card-title> Ocorreu um erro </v-card-title>
         <v-card-text>
           <v-container>
             <ul>
-            <!-- Exibir cada mensagem de erro em uma lista -->
-            <li v-for="mensagem in erros" :key="mensagem">{{ mensagem }}</li>
-          </ul>
+              <!-- Exibir cada mensagem de erro em uma lista -->
+              <li v-for="mensagem in erros" :key="mensagem">{{ mensagem }}</li>
+            </ul>
           </v-container>
         </v-card-text>
         <v-card-actions>
@@ -54,14 +54,18 @@
 
     <v-dialog v-model="confirmarDelecaoDialog" max-width="600">
       <v-card>
-        <v-card-title>
-          Confirmação
-        </v-card-title>
+        <v-card-title> Confirmação </v-card-title>
         <v-card-text>
-            Você tem certeza que quer excluir o item {{produtoDeletar.nome}}, essa ação não tem retorno.
+          Você tem certeza que quer excluir o item {{ produtoDeletar.nome }},
+          essa ação não tem retorno.
         </v-card-text>
         <v-card-actions>
-          <v-btn color="blue darken-1" @click="deletarProduto(produtoDeletar);confirmarDelecaoDialog=false"
+          <v-btn
+            color="blue darken-1"
+            @click="
+              deletarProduto(produtoDeletar);
+              confirmarDelecaoDialog = false;
+            "
             >Sim</v-btn
           >
           <v-spacer></v-spacer>
@@ -71,7 +75,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
   </v-container>
 </template>
 
@@ -111,6 +114,7 @@ export default defineComponent({
       produtoSelecionado: null as BuscaProdutoDTO | null,
       produtoDeletar: null as BuscaProdutoDTO | null,
       modoEdicao: false,
+      sortBy: null,
     };
   },
   methods: {
@@ -120,21 +124,25 @@ export default defineComponent({
     },
     salvarProduto() {
       if (this.modoEdicao) {
-        ProdutosService.atualizar(this.produtoSelecionado).then((res) => {
-          this.produtoSelecionado = null;
-          this.buscarProdutos();
-        }).catch(err => {
-          this.erros = err.split('\n').filter(a => !!a)
-          this.erroDialog = true;
-        });
+        ProdutosService.atualizar(this.produtoSelecionado)
+          .then((res) => {
+            this.produtoSelecionado = null;
+            this.buscarProdutos();
+          })
+          .catch((err) => {
+            this.erros = err.split("\n").filter((a) => !!a);
+            this.erroDialog = true;
+          });
       } else {
-        ProdutosService.criar(this.produtoSelecionado).then((res) => {
-          this.produtoSelecionado = null;
-          this.buscarProdutos();
-        }).catch(err => {
-          this.erros = err.split('\n').filter(a => !!a)
-          this.erroDialog = true;
-        });
+        ProdutosService.criar(this.produtoSelecionado)
+          .then((res) => {
+            this.produtoSelecionado = null;
+            this.buscarProdutos();
+          })
+          .catch((err) => {
+            this.erros = err.split("\n").filter((a) => !!a);
+            this.erroDialog = true;
+          });
       }
     },
     adicionarProduto() {
@@ -146,17 +154,36 @@ export default defineComponent({
       this.confirmarDelecaoDialog = true;
     },
     deletarProduto(item: BuscaProdutoDTO) {
-      ProdutosService.deletar(item).then((res) => {
-        this.buscarProdutos();
-      });
+      ProdutosService.deletar(item)
+        .then((res) => {
+          this.buscarProdutos();
+        })
+        .catch((err) => {
+          this.erros = err.split("\n").filter((a) => !!a);
+          this.erroDialog = true;
+        });
+    },
+    updateOptions(opt) {
+      this.page = opt.page;
+      this.itemsPerPage = opt.itemsPerPage;
+      this.sortBy = opt.sortBy[0];
+      console.log(opt);
+      this.buscarProdutos();
     },
     buscarProdutos() {
       this.loading = true;
-      ProdutosService.listarProdutos(this.page || 1, this.itemsPerPage || 10)
+      const sortByColumn = this.sortBy && this.sortBy.key;
+      const sortByAscending = this.sortBy && this.sortBy.order == "asc";
+      ProdutosService.listarProdutos(
+        this.page || 1,
+        this.itemsPerPage || 10,
+        sortByColumn,
+        sortByAscending
+      )
         .then((produtos) => {
           this.produtos = produtos;
           this.loading = false;
-          this.buscarTotalProdutos()
+          this.buscarTotalProdutos();
         })
         .catch(console.error)
         .finally(() => (this.loading = false));

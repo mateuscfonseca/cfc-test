@@ -35,8 +35,7 @@ public class ProdutoResource {
     @Path("{id}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Busca um produto por id",
-           description = "Busca um produto por id, caso não encontre retorna 404")
+    @Operation(summary = "Busca um produto por id", description = "Busca um produto por id, caso não encontre retorna 404")
     public Response buscar(@PathParam("id") Long id) {
         try {
             final var response = this.produtoService.buscarPorId(id);
@@ -48,11 +47,11 @@ public class ProdutoResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Lista produtos de forma paginada",
-           description = "Lista produtos de forma paginada, parametro page começa em 1")
-    public Response listar(@RestQuery("page") int page, @RestQuery("pageSize") int pageSize) {
+    @Operation(summary = "Lista produtos de forma paginada", description = "Lista produtos de forma paginada, parametro page começa em 1")
+    public Response listar(@RestQuery("page") int page, @RestQuery("pageSize") int pageSize,
+            @RestQuery("sortByColumn") String sortByColumn, @RestQuery("sortByAsceding") Boolean sortByAsceding) {
 
-        final var response = this.produtoService.listarPaginado(page, pageSize);
+        final var response = this.produtoService.listarPaginado(page, pageSize, sortByColumn, sortByAsceding);
         return Response.ok(response).build();
 
     }
@@ -60,8 +59,7 @@ public class ProdutoResource {
     @Path("/todos")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Lista todos os produtos",
-           description = "Lista todos os produtos")
+    @Operation(summary = "Lista todos os produtos", description = "Lista todos os produtos")
     public Response listarTodos() {
 
         final var response = this.produtoService.listarTodos();
@@ -88,7 +86,7 @@ public class ProdutoResource {
         final var response = this.produtoService.criar(dto);
         return Response.status(Status.CREATED).entity(response).build();
     }
-    
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(summary = "Atualiza um produto", description = "Atributos vazios são desconsiderados, exceto o ID que é obrigatório")
@@ -102,7 +100,7 @@ public class ProdutoResource {
             return Response.status(Status.NOT_FOUND).build();
         }
     }
-    
+
     @Path("{id}")
     @DELETE
     @Retry(maxRetries = 2)

@@ -3,6 +3,7 @@ package org.mateus.service;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.jboss.logging.Logger;
 import org.mateus.dtos.BuscaProdutoResponseDTO;
@@ -57,10 +58,16 @@ public class ProdutoService {
 
     }
 
-    public List<BuscaProdutoResponseDTO> listarPaginado(int page, int pageSize)
+    public List<BuscaProdutoResponseDTO> listarPaginado(int page, int pageSize, String sorbyColumn, Boolean sortByAscending)
             throws ProdutoException {
 
-        final var produtos = this.repository.findAll(Sort.descending("id")).page(page - 1, pageSize);
+        var sort = Sort.descending("id");
+        sorbyColumn = ProdutoMapper.translateSortByColumn(sorbyColumn);
+        if(Objects.nonNull(sorbyColumn) && !sorbyColumn.isEmpty() && Objects.nonNull(sortByAscending)) {
+            sort = sortByAscending ? Sort.ascending(sorbyColumn) : Sort.descending(sorbyColumn);
+        }
+
+        final var produtos = this.repository.findAll(sort).page(page - 1, pageSize);
         return produtos.stream().map(ProdutoMapper::toBuscaProdutoResponseDTO).collect(toList());
     }
 

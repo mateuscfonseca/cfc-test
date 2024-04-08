@@ -37,4 +37,22 @@ public class ProdutoMapper {
         return new ProdutoEventDTO(ProdutoEventType.DELETAR, produto.getId(),null, null, null, null);
     }
 
+    /**
+     * Desacopla os nomes da coluna do front end com o back. 
+     * @param sorbyColumn
+     * @return
+     */
+    public static String translateSortByColumn(String sorbyColumn) {
+        switch (sorbyColumn) {
+            case "nome":
+                return "nome";
+            case "descricao":
+                return "descricao";
+            case "preco":
+                return "preco";
+            default:
+                return "id";
+        }
+    }
+
 }
