@@ -85,8 +85,8 @@ services:
     build:
       context: ./back-end/
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
+    # ports:
+    #   - "8080:8080"
     depends_on:
       - sql-server
       - kafka
@@ -98,14 +98,14 @@ services:
     build:
       context: ./front-end/cfc-test/
       dockerfile: Dockerfile
-    ports:
-      - "3000:80"
+    # ports:
+    #   - "3000:80"
     networks:
       - cfc-netwoek
     depends_on:
       - backend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/app"]
+      test: ["CMD", "curl", "-f", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -2,12 +2,13 @@ package org.mateus.dtos;
 
 import java.math.BigDecimal;
 
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-
+@Schema
 public class CreateProdutoRequestDTO {
 
     @NotEmpty(message = "O nome não pode ser vazio.")

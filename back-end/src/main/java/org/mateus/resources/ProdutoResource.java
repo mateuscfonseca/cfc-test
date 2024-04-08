@@ -1,6 +1,7 @@
 package org.mateus.resources;
 
 import org.eclipse.microprofile.faulttolerance.Retry;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.jboss.resteasy.reactive.RestQuery;
 import org.mateus.dtos.CreateProdutoRequestDTO;
 import org.mateus.dtos.UpdateProdutoRequestDTO;
@@ -34,6 +35,8 @@ public class ProdutoResource {
     @Path("{id}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Busca um produto por id",
+           description = "Busca um produto por id, caso não encontre retorna 404")
     public Response buscar(@PathParam("id") Long id) {
         try {
             final var response = this.produtoService.buscarPorId(id);
@@ -45,6 +48,8 @@ public class ProdutoResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Lista produtos de forma paginada",
+           description = "Lista produtos de forma paginada, parametro page começa em 1")
     public Response listar(@RestQuery("page") int page, @RestQuery("pageSize") int pageSize) {
 
         final var response = this.produtoService.listarPaginado(page, pageSize);
@@ -55,6 +60,8 @@ public class ProdutoResource {
     @Path("/todos")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Lista todos os produtos",
+           description = "Lista todos os produtos")
     public Response listarTodos() {
 
         final var response = this.produtoService.listarTodos();
@@ -65,6 +72,7 @@ public class ProdutoResource {
     @Path("/total")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Traz o total de produtos cadastrados")
     public Response total() {
 
         final var response = this.produtoService.total();
@@ -75,6 +83,7 @@ public class ProdutoResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Retry(maxRetries = 2)
+    @Operation(summary = "Cria um novo produto")
     public Response criar(@Valid CreateProdutoRequestDTO dto) {
         final var response = this.produtoService.criar(dto);
         return Response.status(Status.CREATED).entity(response).build();
@@ -82,6 +91,7 @@ public class ProdutoResource {
     
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Atualiza um produto", description = "Atributos vazios são desconsiderados, exceto o ID que é obrigatório")
     @Retry(maxRetries = 2)
     public Response atualizar(@Valid UpdateProdutoRequestDTO dto) {
         try {
