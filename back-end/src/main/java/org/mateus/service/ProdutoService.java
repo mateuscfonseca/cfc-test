@@ -155,7 +155,7 @@ public class ProdutoService {
             this.repository.delete(optProduto.get());
             this.transactionManager.commit();
 
-            this.producer.emitir(ProdutoMapper.toUpdateEvent(optProduto.get()));
+            this.producer.emitir(ProdutoMapper.toDeleteEvent(optProduto.get()));
 
         } catch (PersistenceException | NotSupportedException | SystemException | SecurityException
                 | IllegalStateException | RollbackException | HeuristicMixedException | HeuristicRollbackException

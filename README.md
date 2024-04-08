@@ -87,6 +87,24 @@ Error: @vitejs/plugin-vue requires vue (>=3.2.13) or @vue/compiler-sfc to be pre
 Certifique-se que está usando a versão 18 do node.
 
 
+## Kafka
+Para validar se o topico foi criado corretamente, excute o seguinte comando
+
+```sh
+docker-compose exec kafka  \
+  kafka-topics --describe --topic produto --bootstrap-server kafka:9092
+```
+Para assistir as mensagens chegando
+
+```sh
+docker-compose exec kafka  \
+  kafka-console-consumer --bootstrap-server kafka:9092 --topic produto --from-beginning --max-messages 100
+```
+
+## Próximos passos
+- Validar requisições com uma API key
+- Implementar o padrão CQRS com EventSourcing
+
 
 
 
