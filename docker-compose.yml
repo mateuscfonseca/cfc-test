@@ -18,6 +18,9 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    networks:
+      - cfc-netwoek
+
   init:
     image: mcr.microsoft.com/mssql-tools
     volumes:
@@ -25,6 +28,8 @@ services:
     command: /opt/mssql-tools/bin/sqlcmd -S sql-server -U sa -P 'Tn2o80-C16@' -i /usr/config/criar-banco.sql
     depends_on:
       - sql-server
+    networks:
+      - cfc-netwoek
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -34,11 +39,14 @@ services:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+
     healthcheck:
       test: ["CMD", "echo", "ruok"]  
       interval: 10s  
       retries: 3 
       timeout: 5s  
+    networks:
+      - cfc-netwoek
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -60,6 +68,8 @@ services:
       interval: 10s
       retries: 3
       timeout: 5s
+    networks:
+      - cfc-netwoek
 
   criar-topico:
     image: confluentinc/cp-kafka:latest
@@ -67,5 +77,56 @@ services:
       - kafka
     command: >
       sh -c "/usr/bin/kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic produto"
+    networks:
+      - cfc-netwoek
+
+  # Backend Quarkus
+  backend:
+    build:
+      context: ./back-end/
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sql-server
+      - kafka
+    networks:
+      - cfc-netwoek
+
+  # Frontend Vue.js
+  frontend:
+    build:
+      context: ./front-end/cfc-test/
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    networks:
+      - cfc-netwoek
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/app"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Servidor Nginx
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - cfc-netwoek
+    depends_on:
+      - backend
+      - frontend    
+
+networks:
+  cfc-netwoek:
+    driver: bridge    
+    
 volumes:
   sql-data:
