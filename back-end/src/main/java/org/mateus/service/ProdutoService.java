@@ -75,7 +75,6 @@ public class ProdutoService {
         return this.repository.count();
     }
 
-    // @Transactional(rollbackOn = ProdutoException.class)
     public BuscaProdutoResponseDTO criar(@Valid CreateProdutoRequestDTO createDto) throws ProdutoException {
         try {
             Produto produto = ProdutoMapper.fromCreateRequest(createDto);
@@ -83,7 +82,7 @@ public class ProdutoService {
             this.repository.persistAndFlush(produto);
             this.transactionManager.commit();
 
-            this.producer.emitirProdutoCriado(ProdutoMapper.toCreateEvent(produto));
+            this.producer.emitir(ProdutoMapper.toCreateEvent(produto));
 
             return ProdutoMapper.toBuscaProdutoResponseDTO(produto);
 
@@ -93,7 +92,6 @@ public class ProdutoService {
             try {
                 this.transactionManager.rollback();
             } catch (IllegalStateException | SecurityException | SystemException e1) {
-                
                 e1.printStackTrace();
             }
             final var mensagem = "Erro ao criar produto";
@@ -103,10 +101,10 @@ public class ProdutoService {
         }
     }
 
-    @Transactional(rollbackOn = ProdutoException.class)
     public BuscaProdutoResponseDTO update(@Valid UpdateProdutoRequestDTO updateDto)
             throws ProdutoException, ProdutoNaoEncontradoException {
         try {
+            this.transactionManager.begin();
             Produto produto = ProdutoMapper.fromUpdateRequest(updateDto);
             final var optProduto = this.repository.findByIdOptional(updateDto.getId());
 
@@ -118,10 +116,20 @@ public class ProdutoService {
             produtoAtual.update(produto);
 
             this.repository.persistAndFlush(produtoAtual);
+            this.transactionManager.commit();
+
+            this.producer.emitir(ProdutoMapper.toUpdateEvent(produto));
 
             return ProdutoMapper.toBuscaProdutoResponseDTO(produtoAtual);
 
-        } catch (PersistenceException e) {
+        } catch (PersistenceException | NotSupportedException | SystemException | SecurityException
+                | IllegalStateException | RollbackException | HeuristicMixedException | HeuristicRollbackException
+                | JsonProcessingException e) {
+            try {
+                this.transactionManager.rollback();
+            } catch (IllegalStateException | SecurityException | SystemException e1) {
+                e1.printStackTrace();
+            }
             final var mensagem = "Erro ao atualizar produto";
             LOG.error(mensagem, e);
 
@@ -129,7 +137,6 @@ public class ProdutoService {
         }
     }
 
-    @Transactional(rollbackOn = ProdutoException.class)
     public void delete(Long id)
             throws ProdutoException, ProdutoNaoEncontradoException {
         try {
@@ -137,10 +144,20 @@ public class ProdutoService {
 
             if (optProduto.isEmpty())
                 throw new ProdutoNaoEncontradoException();
-
+            this.transactionManager.begin();
             this.repository.delete(optProduto.get());
+            this.transactionManager.commit();
 
-        } catch (PersistenceException e) {
+            this.producer.emitir(ProdutoMapper.toUpdateEvent(optProduto.get()));
+
+        } catch (PersistenceException | NotSupportedException | SystemException | SecurityException
+                | IllegalStateException | RollbackException | HeuristicMixedException | HeuristicRollbackException
+                | JsonProcessingException e) {
+            try {
+                this.transactionManager.rollback();
+            } catch (IllegalStateException | SecurityException | SystemException e1) {
+                e1.printStackTrace();
+            }
             final var mensagem = "Erro ao atualizar produto";
             LOG.error(mensagem, e);
 

@@ -3,7 +3,6 @@ package org.mateus.producers;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
-import org.mateus.dtos.CreateProdutoEventDTO;
 import org.mateus.resources.ProdutoResource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,7 +23,7 @@ public class ProdutoProducer {
     @Inject
     ObjectMapper mapper;
 
-    public void emitirProdutoCriado(CreateProdutoEventDTO dto) throws JsonProcessingException {
+    public void emitir(ProdutoEventDTO dto) throws JsonProcessingException {
 
         final var dtoAsString = mapper.writeValueAsString(dto);
 

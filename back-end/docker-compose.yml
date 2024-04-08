@@ -1,0 +1,30 @@
+version: '3.7'
+
+services:
+  sql-server:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sql-server
+    user: root
+    ports:
+      - "1433:1433"
+    environment:
+      - "SA_PASSWORD=Tn2o80-C16@"
+      - ACCEPT_EULA=Y
+    volumes:
+      - sql-data:/var/opt/mssql/data
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-U", "sa", "-P", "Tn2o80-C16@", "-Q", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  init:
+    image: mcr.microsoft.com/mssql-tools
+    volumes:
+      - ./initdb:/usr/config
+    command: /opt/mssql-tools/bin/sqlcmd -S sql-server -U sa -P 'Tn2o80-C16@' -i /usr/config/criar-banco.sql
+    depends_on:
+      - sql-server
+volumes:
+  sql-data:
